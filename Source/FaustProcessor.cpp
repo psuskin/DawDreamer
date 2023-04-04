@@ -563,8 +563,7 @@ void FaustProcessor::compileSignals(
   auto target = getTarget();
   std::string error_msg;
 
-  m_factory = createDSPFactoryFromSignals("dawdreamer", signals, argc, argv,
-                                          target, error_msg);
+  m_factory = nullptr; //createDSPFactoryFromSignals("dawdreamer", signals, argc, argv, target, error_msg);
 
   if (!m_factory) {
     clear();
@@ -640,8 +639,7 @@ void FaustProcessor::compileBox(
   auto target = this->getTarget();
   std::string error_msg;
 
-  m_factory = createDSPFactoryFromBoxes("dawdreamer", box, argc, argv, target,
-                                        error_msg);
+  m_factory = nullptr; //createDSPFactoryFromBoxes("dawdreamer", box, argc, argv, target, error_msg);
 
   if (!m_factory) {
     clear();

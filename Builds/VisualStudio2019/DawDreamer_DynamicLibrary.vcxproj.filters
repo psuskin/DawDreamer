@@ -777,9 +777,6 @@
     <ClCompile Include="..\..\Source\RenderEngine.cpp">
       <Filter>DawDreamer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\source.cpp">
-      <Filter>DawDreamer</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\JuceLibraryCode\modules\juce_audio_basics\audio_play_head\juce_AudioPlayHead.cpp">
       <Filter>JUCE Modules\juce_audio_basics\audio_play_head</Filter>
     </ClCompile>
@@ -3090,6 +3087,7 @@
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_video.cpp">
       <Filter>JUCE Library Code</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\thirdparty\libsamplerate\include\samplerate.h">
