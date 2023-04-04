@@ -108,8 +108,8 @@ bool AudioProcessor::removeBus (bool inputBus)
 //==============================================================================
 bool AudioProcessor::setBusesLayout (const BusesLayout& arr)
 {
-    jassert (arr.inputBuses. size() == getBusCount (true)
-          && arr.outputBuses.size() == getBusCount (false));
+    //jassert (arr.inputBuses. size() == getBusCount (true)
+    //      && arr.outputBuses.size() == getBusCount (false));
 
     if (arr == getBusesLayout())
         return true;

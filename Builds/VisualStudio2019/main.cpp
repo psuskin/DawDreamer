@@ -1,7 +1,134 @@
 #include "../../../Source/RenderEngine.h"
+#include "../../../Source/PlaybackProcessor.h"
+#include "../../../Source/PluginProcessor.h"
+
+#include <locale>
+#include <codecvt>
+
+#define SAMPLE_RATE 44100
+#define BLOCK_SIZE 512
+
+#define BPM 160
+
+// Plugins
+std::string Serum = "C:/Program Files/Common Files/VST2/Serum_x64.dll";
+std::string LFOTool = "C:/Program Files/Common Files/VST2/LFOTool_x64.dll";
+std::string OTT = "C:/Program Files/Common Files/VST2/OTT_x64.dll";
+std::string DJMFilter = "C:/Program Files/Common Files/VST2/DJMFilter_x64.dll";
+
+std::string VOS = "C:/Program Files/Steinberg/VSTPlugins/TDR VOS SlickEQ GE.dll";
+std::string Kotelnikov = "C:/Program Files/Steinberg/VSTPlugins/TDR Kotelnikov GE.dll";
+std::string Limiter = "C:/Program Files/Steinberg/VSTPlugins/TDR Limiter 6 GE.dll";
+std::string Nova = "C:/Program Files/Steinberg/VSTPlugins/TDR Nova GE.dll";
+
+std::string Sitala = "C:/Program Files/Steinberg/VSTPlugins/Sitala.dll";
+
+struct PluginData {
+  std::string preset = "";
+  std::string state = "";
+  std::vector<std::pair<int, float>> parameters;
+  std::vector<std::pair<int, pybind11::array>> automation;
+};
+
+void render(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin, std::vector<std::pair<std::string, PluginData>> effectPlugins, std::string midi) {
+  DAG graph;
+
+  auto& [synthPluginPath, synthPluginData] = synthPlugin;
+
+  auto synth = engine.makePluginProcessor("synth", synthPluginPath);
+
+  if (synthPluginData.preset != "") {
+    synth->loadPreset(synthPluginData.preset);
+  }
+  else if (synthPluginData.state != "") {
+    synth->loadStateInformation(synthPluginData.state);
+  }
+  if (!synthPluginData.parameters.empty()) {
+    for (const auto& pair : synthPluginData.parameters) {
+      synth->setParameter(pair.first, pair.second);
+    }
+  }
+  if (!synthPluginData.automation.empty()) {
+    for (const auto& pair : synthPluginData.automation) {
+      int index = pair.first;
+      synth->setAutomationByIndex(index, pair.second, 0);
+    }
+  }
+
+  graph.nodes.push_back({ synth, {} });
+
+  size_t i = 0;
+  std::string previousNode = "synth";
+  for (const auto& pluginPair : effectPlugins) {
+    auto& [pluginPath, pluginData] = pluginPair;
+
+    auto effect = engine.makePluginProcessor("effect" + std::to_string(i), pluginPath);
+
+    if (pluginData.preset != "") {
+      synth->loadPreset(pluginData.preset);
+    }
+    else if (pluginData.state != "") {
+      synth->loadStateInformation(pluginData.state);
+    }
+    if (!pluginData.parameters.empty()) {
+      for (const auto& pair : pluginData.parameters) {
+        synth->setParameter(pair.first, pair.second);
+      }
+    }
+    if (!pluginData.automation.empty()) {
+      for (const auto& pair : pluginData.automation) {
+        int index = pair.first;
+        synth->setAutomationByIndex(index, pair.second, 0);
+      }
+    }
+
+    graph.nodes.push_back({ effect, {previousNode} });
+
+    i++;
+    previousNode = effect->getName().toStdString();
+  }
+
+  synth->loadMidi(midi, true, false, true);
+
+  engine.loadGraph(graph);
+
+  engine.render(10, false);
+
+  auto arr = engine.getAudioFrames();
+
+  auto arr_obj_prop = arr.request();
+
+  float* const* vals = (float* const*)arr_obj_prop.ptr;
+
+  juce::AudioSampleBuffer output(vals, arr_obj_prop.shape[0], arr_obj_prop.shape[1]);
+
+  juce::File outputFile("out.wav");
+  std::unique_ptr<juce::FileOutputStream> outStream = outputFile.createOutputStream();
+  juce::WavAudioFormat format;
+  std::unique_ptr<juce::AudioFormatWriter> writer(format.createWriterFor(outStream.get(), SAMPLE_RATE, 2, 32, {}, 0));
+  writer->writeFromAudioSampleBuffer(output, 0, output.getNumSamples());
+}
 
 int main() {
-  std::cout << "Hi" << std::endl;
+  juce::MessageManager::getInstance();
+
+  Py_SetPythonHome(L"C:/Users/psusk/AppData/Local/Programs/Python/Python39");
+  Py_Initialize();
+
+  RenderEngine engine(SAMPLE_RATE, BLOCK_SIZE);
+  engine.setBPM(BPM);
+
+  PluginData synthPluginData;
+  synthPluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Sitala/Drum Kit - Trap 001.json";
+  std::pair<std::string, PluginData> synth = std::make_pair(Sitala, synthPluginData);
+
+  PluginData effect1PluginData;
+  effect1PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
+  std::pair<std::string, PluginData> effect1 = std::make_pair(VOS, effect1PluginData);
+
+  std::string midi = "C:/Users/psusk/source/repos/Python/vize/MIDIs/THH - 160 BPM - 4 Bars - Drum Pattern 1 - Intro 1a.mid";
+
+  render(engine, synth, {effect1}, midi);
 
   return 0;
 }
