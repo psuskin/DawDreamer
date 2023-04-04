@@ -101,7 +101,7 @@ class ProcessorBase : public juce::AudioProcessor {
 
   py::array_t<float> bufferToPyArray(juce::AudioSampleBuffer& buffer);
 
-  py::array_t<float> getAudioFrames();
+  juce::AudioSampleBuffer getAudioFrames();
 
   void setRecorderLength(int numSamples);
 

@@ -361,19 +361,15 @@ bool RenderEngine::setBPMwithPPQN(py::array_t<float> input,
   return true;
 }
 
-py::array_t<float> RenderEngine::getAudioFrames() {
+juce::AudioSampleBuffer RenderEngine::getAudioFrames() {
   if (m_mainProcessorGraph->getNumNodes() == 0 || m_stringDag.size() == 0) {
-    // NB: For some reason we can't initialize the array as shape (2, 0)
-    py::array_t<float, py::array::c_style> arr({2, 1});
-    arr.resize({2, 0});
-
-    return arr;
+    return juce::AudioSampleBuffer(2, 0);
   }
 
   return getAudioFramesForName(m_stringDag.at(m_stringDag.size() - 1).first);
 }
 
-py::array_t<float> RenderEngine::getAudioFramesForName(std::string& name) {
+juce::AudioSampleBuffer RenderEngine::getAudioFramesForName(std::string& name) {
   if (m_UniqueNameToNodeID.find(name) != m_UniqueNameToNodeID.end()) {
     auto node = m_mainProcessorGraph->getNodeForId(m_UniqueNameToNodeID[name]);
 
@@ -385,11 +381,7 @@ py::array_t<float> RenderEngine::getAudioFramesForName(std::string& name) {
     }
   }
 
-  // NB: For some reason we can't initialize the array as shape (2, 0)
-  py::array_t<float, py::array::c_style> arr({2, 1});
-  arr.resize({2, 0});
-
-  return arr;
+  return juce::AudioSampleBuffer(2, 0);
 }
 
 juce::Optional<juce::AudioPlayHead::PositionInfo> RenderEngine::getPosition()

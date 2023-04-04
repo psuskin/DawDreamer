@@ -2,9 +2,6 @@
 #include "../../../Source/PlaybackProcessor.h"
 #include "../../../Source/PluginProcessor.h"
 
-#include <locale>
-#include <codecvt>
-
 #define SAMPLE_RATE 44100
 #define BLOCK_SIZE 512
 
@@ -94,19 +91,15 @@ void render(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin
 
   engine.render(10, false);
 
-  auto arr = engine.getAudioFrames();
+  auto audio = engine.getAudioFrames();
 
-  auto arr_obj_prop = arr.request();
-
-  float* const* vals = (float* const*)arr_obj_prop.ptr;
-
-  juce::AudioSampleBuffer output(vals, arr_obj_prop.shape[0], arr_obj_prop.shape[1]);
-
-  juce::File outputFile("out.wav");
-  std::unique_ptr<juce::FileOutputStream> outStream = outputFile.createOutputStream();
-  juce::WavAudioFormat format;
-  std::unique_ptr<juce::AudioFormatWriter> writer(format.createWriterFor(outStream.get(), SAMPLE_RATE, 2, 32, {}, 0));
-  writer->writeFromAudioSampleBuffer(output, 0, output.getNumSamples());
+  juce::File outputFile("C:/Users/psusk/Downloads/out.wav");
+  auto outStream = outputFile.createOutputStream();
+  AudioFormatManager formatManager;
+  formatManager.registerBasicFormats();
+  std::unique_ptr<juce::AudioFormatWriter> writer(formatManager.findFormatForFileExtension("wav")->createWriterFor(outStream.get(), SAMPLE_RATE, audio.getNumChannels(), 32, juce::StringPairArray(), 0));
+  writer->writeFromAudioSampleBuffer(audio, 0, audio.getNumSamples());
+  outStream.release();
 }
 
 int main() {

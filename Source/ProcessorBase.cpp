@@ -269,8 +269,8 @@ py::array_t<float> ProcessorBase::bufferToPyArray(
   return arr;
 }
 
-py::array_t<float> ProcessorBase::getAudioFrames() {
-  return bufferToPyArray(myRecordBuffer);
+juce::AudioSampleBuffer ProcessorBase::getAudioFrames() {
+  return myRecordBuffer;
 }
 
 void ProcessorBase::setRecorderLength(int numSamples) {

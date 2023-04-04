@@ -50,9 +50,9 @@ class RenderEngine : public AudioPlayHead {
 
   bool setBPMwithPPQN(py::array_t<float> input, std::uint32_t ppqn);
 
-  py::array_t<float> getAudioFrames();
+  juce::AudioSampleBuffer getAudioFrames();
 
-  py::array_t<float> getAudioFramesForName(std::string& name);
+  juce::AudioSampleBuffer getAudioFramesForName(std::string& name);
 
   juce::Optional<PositionInfo> getPosition() const override;
   bool canControlTransport() override;
