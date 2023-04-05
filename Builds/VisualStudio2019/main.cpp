@@ -31,74 +31,7 @@ struct PluginData {
   std::vector<std::pair<int, pybind11::array>> automation;
 };
 
-void render(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin, std::vector<std::pair<std::string, PluginData>> effectPlugins, std::string midi) {
-  DAG graph;
-
-  auto& [synthPluginPath, synthPluginData] = synthPlugin;
-
-  auto synth = engine.makePluginProcessor("synth", synthPluginPath);
-
-  if (synthPluginData.preset != "") {
-    synth->loadPreset(synthPluginData.preset);
-  }
-  else if (synthPluginData.state != "") {
-    synth->loadStateInformation(synthPluginData.state);
-  }
-  if (!synthPluginData.parameters.empty()) {
-    for (const auto& pair : synthPluginData.parameters) {
-      synth->setParameter(pair.first, pair.second);
-    }
-  }
-  if (!synthPluginData.automation.empty()) {
-    for (const auto& pair : synthPluginData.automation) {
-      int index = pair.first;
-      synth->setAutomationByIndex(index, pair.second, 0);
-    }
-  }
-
-  synth->loadMidi(midi, true, false, true);
-
-  graph.nodes.push_back({ synth, {} });
-
-  size_t i = 0;
-  std::string previousNode = "synth";
-  for (const auto& pluginPair : effectPlugins) {
-    auto& [pluginPath, pluginData] = pluginPair;
-
-    auto effect = engine.makePluginProcessor("effect" + std::to_string(i), pluginPath);
-
-    if (pluginData.preset != "") {
-      effect->loadPreset(pluginData.preset);
-    }
-    else if (pluginData.state != "") {
-      effect->loadStateInformation(pluginData.state);
-    }
-    if (!pluginData.parameters.empty()) {
-      for (const auto& pair : pluginData.parameters) {
-        effect->setParameter(pair.first, pair.second);
-      }
-    }
-    if (!pluginData.automation.empty()) {
-      for (const auto& pair : pluginData.automation) {
-        int index = pair.first;
-        effect->setAutomationByIndex(index, pair.second, 0);
-      }
-    }
-
-    graph.nodes.push_back({ effect, {previousNode} });
-
-    i++;
-    //previousNode = "effect" + std::to_string(i);
-  }
-
-
-  engine.loadGraph(graph);
-
-  engine.render(180, false);
-
-  auto audio = engine.getAudioFrames();
-
-  std::string outputPath = "C:/Users/psusk/Downloads/out.wav";
+void saveToFile(juce::AudioSampleBuffer& audio, std::string outputPath = "C:/Users/psusk/Downloads/out.wav") {
   std::filesystem::remove(outputPath);
   juce::File outputFile(outputPath);
   auto outStream = outputFile.createOutputStream();
@@ -109,40 +42,131 @@ void render(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin
   outStream.release();
 }
 
+PluginProcessorWrapper* loadPluginProcessor(RenderEngine& engine, std::string pluginPath, PluginData pluginData, std::string processorName) {
+  PluginProcessorWrapper* plugin = engine.makePluginProcessor(processorName, pluginPath);
+
+  if (pluginData.preset != "") {
+    plugin->loadPreset(pluginData.preset);
+  }
+  else if (pluginData.state != "") {
+    plugin->loadStateInformation(pluginData.state);
+  }
+  if (!pluginData.parameters.empty()) {
+    for (const auto& pair : pluginData.parameters) {
+      plugin->setParameter(pair.first, pair.second);
+    }
+  }
+  if (!pluginData.automation.empty()) {
+    for (const auto& pair : pluginData.automation) {
+      int index = pair.first;
+      plugin->setAutomationByIndex(index, pair.second, 0);
+    }
+  }
+
+  return plugin;
+}
+
+void loadGraph(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin, std::vector<std::pair<std::string, PluginData>> effectPlugins, std::string midi) {
+  DAG graph;
+
+  auto& [synthPluginPath, synthPluginData] = synthPlugin;
+
+  auto synth = loadPluginProcessor(engine, synthPluginPath, synthPluginData, "synth");
+
+  synth->loadMidi(midi, true, false, true);
+
+  graph.nodes.push_back({ synth, {} });
+
+  size_t i = 0;
+  std::string previousNode = "synth";
+  for (const auto& pluginPair : effectPlugins) {
+    auto& [pluginPath, pluginData] = pluginPair;
+
+    auto effect = loadPluginProcessor(engine, pluginPath, pluginData, "effect" + std::to_string(i));
+
+    graph.nodes.push_back({ effect, {previousNode} });
+
+    i++;
+    //previousNode = "effect" + std::to_string(i);
+  }
+
+  engine.loadGraph(graph);
+}
+
+void multithread() {
+  //std::string midi = "C:/Users/psusk/source/repos/Python/vize/MIDIs/THH - 160 BPM - 4 Bars - Drum Pattern 1 - Intro 1a.mid";
+  std::string midi = "C:/Users/psusk/source/repos/Python/vize/Int/stem-drums.mid";
+
+  PluginData synthPluginData;
+  synthPluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Sitala/Drum Kit - Trap 001.json";
+  std::pair<std::string, PluginData> synthPlugin = std::make_pair(Sitala, synthPluginData);
+
+  std::vector<std::pair<std::string, PluginData>> effectPlugins;
+
+  PluginData effect1PluginData;
+  effect1PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
+  effectPlugins.push_back(std::make_pair(VOS, effect1PluginData));
+
+  PluginData effect2PluginData;
+  effect2PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-0dB.json";
+  effectPlugins.push_back(std::make_pair(VOS, effect2PluginData));
+
+  PluginData effect3PluginData;
+  effect3PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
+  effectPlugins.push_back(std::make_pair(VOS, effect3PluginData));
+
+  PluginData effect4PluginData;
+  effect4PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-6dBDrums.json";
+  effectPlugins.push_back(std::make_pair(VOS, effect4PluginData));
+
+  /*
+  RenderEngine engine(SAMPLE_RATE, BLOCK_SIZE);
+  engine.setBPM(BPM);
+
+  loadGraph(engine, synthPlugin, effectPlugins, midi);
+
+  engine.render(180, false);
+
+  auto audio = engine.getAudioFrames();
+
+  saveToFile(audio);
+  */
+
+  RenderEngine engine1(SAMPLE_RATE, BLOCK_SIZE);
+  engine1.setBPM(BPM);
+  loadGraph(engine1, synthPlugin, effectPlugins, midi);
+
+  RenderEngine engine2(SAMPLE_RATE, BLOCK_SIZE);
+  engine2.setBPM(BPM);
+  loadGraph(engine2, synthPlugin, effectPlugins, midi);
+
+  auto func = static_cast<bool (RenderEngine::*)(double, bool)>(&RenderEngine::render);
+  std::thread t1(func, &engine1, 180., false);
+  std::thread t2(func, &engine2, 180., false);
+  t1.join();
+  t2.join();
+
+  auto audio1 = engine1.getAudioFrames();
+  saveToFile(audio1, "C:/Users/psusk/Downloads/out1.wav");
+  auto audio2 = engine2.getAudioFrames();
+  saveToFile(audio2, "C:/Users/psusk/Downloads/out2.wav");
+
+  //std::thread t1(render, synth, effects, midi);
+  //std::thread t2(render, synth, effects, midi);
+
+  //t1.join();
+  //t2.join();
+  //render(synth, effects, midi);
+}
+
 int main() {
   juce::MessageManager::getInstance();
 
   Py_SetPythonHome(L"C:/Users/psusk/AppData/Local/Programs/Python/Python39");
   Py_Initialize();
 
-  RenderEngine engine(SAMPLE_RATE, BLOCK_SIZE);
-  engine.setBPM(BPM);
-
-  PluginData synthPluginData;
-  synthPluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Sitala/Drum Kit - Trap 001.json";
-  std::pair<std::string, PluginData> synth = std::make_pair(Sitala, synthPluginData);
-
-  PluginData effect1PluginData;
-  effect1PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
-  std::pair<std::string, PluginData> effect1 = std::make_pair(VOS, effect1PluginData);
-
-  PluginData effect2PluginData;
-  effect2PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-0dB.json";
-  std::pair<std::string, PluginData> effect2 = std::make_pair(VOS, effect2PluginData);
-
-  PluginData effect3PluginData;
-  effect3PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
-  std::pair<std::string, PluginData> effect3 = std::make_pair(VOS, effect3PluginData);
-
-  PluginData effect4PluginData;
-  effect4PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-6dBDrums.json";
-  std::pair<std::string, PluginData> effect4 = std::make_pair(VOS, effect4PluginData);
-
-  //std::string midi = "C:/Users/psusk/source/repos/Python/vize/MIDIs/THH - 160 BPM - 4 Bars - Drum Pattern 1 - Intro 1a.mid";
-  std::string midi = "C:/Users/psusk/source/repos/Python/vize/Int/stem-drums.mid";
-
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  render(engine, synth, {effect1, effect2, effect3, effect4}, midi);
+  multithread();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;

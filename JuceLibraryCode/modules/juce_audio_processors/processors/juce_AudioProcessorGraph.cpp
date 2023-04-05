@@ -1704,7 +1704,7 @@ public:
     {
         renderSequenceExchange.updateAudioThreadState();
 
-        if (renderSequenceExchange.getAudioThreadState() == nullptr && MessageManager::getInstance()->isThisTheMessageThread())
+        if (renderSequenceExchange.getAudioThreadState() == nullptr && !MessageManager::getInstance()->isThisTheMessageThread())
             handleAsyncUpdate();
 
         if (owner->isNonRealtime())
