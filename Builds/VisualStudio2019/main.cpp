@@ -2,6 +2,10 @@
 #include "../../../Source/PlaybackProcessor.h"
 #include "../../../Source/PluginProcessor.h"
 
+#include <cstdio>
+
+#include <chrono>
+
 #define SAMPLE_RATE 44100
 #define BLOCK_SIZE 512
 
@@ -52,6 +56,8 @@ void render(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin
     }
   }
 
+  synth->loadMidi(midi, true, false, true);
+
   graph.nodes.push_back({ synth, {} });
 
   size_t i = 0;
@@ -62,38 +68,39 @@ void render(RenderEngine& engine, std::pair<std::string, PluginData> synthPlugin
     auto effect = engine.makePluginProcessor("effect" + std::to_string(i), pluginPath);
 
     if (pluginData.preset != "") {
-      synth->loadPreset(pluginData.preset);
+      effect->loadPreset(pluginData.preset);
     }
     else if (pluginData.state != "") {
-      synth->loadStateInformation(pluginData.state);
+      effect->loadStateInformation(pluginData.state);
     }
     if (!pluginData.parameters.empty()) {
       for (const auto& pair : pluginData.parameters) {
-        synth->setParameter(pair.first, pair.second);
+        effect->setParameter(pair.first, pair.second);
       }
     }
     if (!pluginData.automation.empty()) {
       for (const auto& pair : pluginData.automation) {
         int index = pair.first;
-        synth->setAutomationByIndex(index, pair.second, 0);
+        effect->setAutomationByIndex(index, pair.second, 0);
       }
     }
 
     graph.nodes.push_back({ effect, {previousNode} });
 
     i++;
-    previousNode = effect->getName().toStdString();
+    //previousNode = "effect" + std::to_string(i);
   }
 
-  synth->loadMidi(midi, true, false, true);
 
   engine.loadGraph(graph);
 
-  engine.render(10, false);
+  engine.render(180, false);
 
   auto audio = engine.getAudioFrames();
 
-  juce::File outputFile("C:/Users/psusk/Downloads/out.wav");
+  std::string outputPath = "C:/Users/psusk/Downloads/out.wav";
+  std::filesystem::remove(outputPath);
+  juce::File outputFile(outputPath);
   auto outStream = outputFile.createOutputStream();
   AudioFormatManager formatManager;
   formatManager.registerBasicFormats();
@@ -119,9 +126,26 @@ int main() {
   effect1PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
   std::pair<std::string, PluginData> effect1 = std::make_pair(VOS, effect1PluginData);
 
-  std::string midi = "C:/Users/psusk/source/repos/Python/vize/MIDIs/THH - 160 BPM - 4 Bars - Drum Pattern 1 - Intro 1a.mid";
+  PluginData effect2PluginData;
+  effect2PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-0dB.json";
+  std::pair<std::string, PluginData> effect2 = std::make_pair(VOS, effect2PluginData);
 
-  render(engine, synth, {effect1}, midi);
+  PluginData effect3PluginData;
+  effect3PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
+  std::pair<std::string, PluginData> effect3 = std::make_pair(VOS, effect3PluginData);
+
+  PluginData effect4PluginData;
+  effect4PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-6dBDrums.json";
+  std::pair<std::string, PluginData> effect4 = std::make_pair(VOS, effect4PluginData);
+
+  //std::string midi = "C:/Users/psusk/source/repos/Python/vize/MIDIs/THH - 160 BPM - 4 Bars - Drum Pattern 1 - Intro 1a.mid";
+  std::string midi = "C:/Users/psusk/source/repos/Python/vize/Int/stem-drums.mid";
+
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+  render(engine, synth, {effect1, effect2, effect3, effect4}, midi);
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+  std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;
 
   return 0;
 }
