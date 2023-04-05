@@ -109,7 +109,7 @@ void multithread() {
 
   PluginData effect2PluginData;
   effect2PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-0dB.json";
-  effectPlugins.push_back(std::make_pair(VOS, effect2PluginData));
+  effectPlugins.push_back(std::make_pair(Limiter, effect2PluginData));
 
   PluginData effect3PluginData;
   effect3PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
@@ -117,20 +117,7 @@ void multithread() {
 
   PluginData effect4PluginData;
   effect4PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-6dBDrums.json";
-  effectPlugins.push_back(std::make_pair(VOS, effect4PluginData));
-
-  /*
-  RenderEngine engine(SAMPLE_RATE, BLOCK_SIZE);
-  engine.setBPM(BPM);
-
-  loadGraph(engine, synthPlugin, effectPlugins, midi);
-
-  engine.render(180, false);
-
-  auto audio = engine.getAudioFrames();
-
-  saveToFile(audio);
-  */
+  effectPlugins.push_back(std::make_pair(Limiter, effect4PluginData));
 
   RenderEngine engine1(SAMPLE_RATE, BLOCK_SIZE);
   engine1.setBPM(BPM);
@@ -150,13 +137,49 @@ void multithread() {
   saveToFile(audio1, "C:/Users/psusk/Downloads/out1.wav");
   auto audio2 = engine2.getAudioFrames();
   saveToFile(audio2, "C:/Users/psusk/Downloads/out2.wav");
+}
 
-  //std::thread t1(render, synth, effects, midi);
-  //std::thread t2(render, synth, effects, midi);
+void nonmultithread() {
+  //std::string midi = "C:/Users/psusk/source/repos/Python/vize/MIDIs/THH - 160 BPM - 4 Bars - Drum Pattern 1 - Intro 1a.mid";
+  std::string midi = "C:/Users/psusk/source/repos/Python/vize/Int/stem-drums.mid";
 
-  //t1.join();
-  //t2.join();
-  //render(synth, effects, midi);
+  PluginData synthPluginData;
+  synthPluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Sitala/Drum Kit - Trap 001.json";
+  std::pair<std::string, PluginData> synthPlugin = std::make_pair(Sitala, synthPluginData);
+
+  std::vector<std::pair<std::string, PluginData>> effectPlugins;
+
+  PluginData effect1PluginData;
+  effect1PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
+  effectPlugins.push_back(std::make_pair(VOS, effect1PluginData));
+
+  PluginData effect2PluginData;
+  effect2PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-0dB.json";
+  effectPlugins.push_back(std::make_pair(Limiter, effect2PluginData));
+
+  PluginData effect3PluginData;
+  effect3PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/VOS/LowCut40Hz.json";
+  effectPlugins.push_back(std::make_pair(VOS, effect3PluginData));
+
+  PluginData effect4PluginData;
+  effect4PluginData.state = "C:/Users/psusk/source/repos/Python/vize/states/Limiter/Limit-6dBDrums.json";
+  effectPlugins.push_back(std::make_pair(Limiter, effect4PluginData));
+
+  RenderEngine engine1(SAMPLE_RATE, BLOCK_SIZE);
+  engine1.setBPM(BPM);
+  loadGraph(engine1, synthPlugin, effectPlugins, midi);
+
+  RenderEngine engine2(SAMPLE_RATE, BLOCK_SIZE);
+  engine2.setBPM(BPM);
+  loadGraph(engine2, synthPlugin, effectPlugins, midi);
+
+  engine1.render(180, false);
+  engine2.render(180, false);
+
+  auto audio1 = engine1.getAudioFrames();
+  saveToFile(audio1, "C:/Users/psusk/Downloads/out1.wav");
+  auto audio2 = engine2.getAudioFrames();
+  saveToFile(audio2, "C:/Users/psusk/Downloads/out2.wav");
 }
 
 int main() {
@@ -166,10 +189,16 @@ int main() {
   Py_Initialize();
 
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  multithread();
+  nonmultithread();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-  std::cout << "Elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;
+  std::cout << "Non-Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;
+
+  begin = std::chrono::steady_clock::now();
+  multithread();
+  end = std::chrono::steady_clock::now();
+
+  std::cout << "Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;
 
   return 0;
 }
