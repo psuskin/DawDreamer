@@ -5,6 +5,12 @@
 
 class PlaybackProcessor : public ProcessorBase {
  public:
+   PlaybackProcessor(std::string newUniqueName, juce::AudioSampleBuffer buffer) : ProcessorBase{ newUniqueName } {
+     m_numChannels = buffer.getNumChannels();
+     myPlaybackData = buffer;
+     setMainBusInputsAndOutputs(0, m_numChannels);
+   }
+
   PlaybackProcessor(std::string newUniqueName,
                     std::vector<std::vector<float>> inputData)
       : ProcessorBase{newUniqueName} {

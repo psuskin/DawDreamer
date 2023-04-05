@@ -433,8 +433,8 @@ PluginProcessorWrapper* RenderEngine::makePluginProcessor(
 }
 
 PlaybackProcessor* RenderEngine::makePlaybackProcessor(const std::string& name,
-                                                       py::array data) {
-  auto processor = new PlaybackProcessor{name, data};
+                                                       juce::AudioSampleBuffer buffer) {
+  auto processor = new PlaybackProcessor{name, buffer};
   this->prepareProcessor(processor, name);
   return processor;
 }

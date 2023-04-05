@@ -68,7 +68,7 @@ class RenderEngine : public AudioPlayHead {
                                               const std::string& path);
 
   PlaybackProcessor* makePlaybackProcessor(const std::string& name,
-                                           py::array input);
+                                           juce::AudioSampleBuffer buffer);
 
 #ifdef BUILD_DAWDREAMER_RUBBERBAND
   PlaybackWarpProcessor* makePlaybackWarpProcessor(const std::string& name,
