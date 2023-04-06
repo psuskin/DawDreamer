@@ -11,7 +11,7 @@
 
 #define BPM 160
 
-#define saveInt 0
+#define save 1
 
 // Plugins
 std::string Serum = "C:/Program Files/Common Files/VST2/Serum_x64.dll";
@@ -49,6 +49,10 @@ struct PluginData {
 };
 
 void saveToFile(juce::AudioSampleBuffer& audio, std::string outputPath = "C:/Users/psusk/Downloads/out.wav") {
+  if (!save) {
+    return;
+  }
+
   std::filesystem::remove(outputPath);
 
   juce::File outputFile(outputPath);
@@ -196,7 +200,7 @@ std::tuple<std::pair<std::string, PluginData>, std::vector<std::pair<std::string
   effect2PluginData.state = LimiterStateDir + "Limit-8dB.json";
   effectPlugins.push_back(std::make_pair(Limiter, effect2PluginData));
 
-  return std::make_tuple(synthPlugin, effectPlugins, drumsMidi);
+  return std::make_tuple(synthPlugin, effectPlugins, bassMidi);
 }
 
 std::tuple<std::vector<std::pair<std::string, PluginData>>, juce::AudioSampleBuffer> getMelody() {
@@ -305,13 +309,39 @@ void multithread() {
   auto SFX = engineSFX.getAudioFrames();
   auto SFX2 = engineSFX2.getAudioFrames();
 
-  if (saveInt) {
-    saveToFile(drums, "C:/Users/psusk/Downloads/drums.wav");
-    saveToFile(bass, "C:/Users/psusk/Downloads/bass.wav");
-    saveToFile(melody, "C:/Users/psusk/Downloads/melody.wav");
-    saveToFile(SFX, "C:/Users/psusk/Downloads/SFX.wav");
-    saveToFile(SFX2, "C:/Users/psusk/Downloads/SFX2.wav");
+  saveToFile(drums, "C:/Users/psusk/Downloads/drums.wav");
+  saveToFile(bass, "C:/Users/psusk/Downloads/bass.wav");
+  saveToFile(melody, "C:/Users/psusk/Downloads/melody.wav");
+  saveToFile(SFX, "C:/Users/psusk/Downloads/SFX.wav");
+  saveToFile(SFX2, "C:/Users/psusk/Downloads/SFX2.wav");
+
+  int numChannels = drums.getNumChannels();
+  int numSamples = drums.getNumSamples();
+
+  juce::AudioSampleBuffer mixdown(numChannels, numSamples);
+  mixdown.clear();
+
+  for (int channel = 0; channel < numChannels; channel++) {
+    mixdown.addFrom(channel, 0, drums.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, bass.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, melody.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, SFX.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, SFX2.getReadPointer(channel), numSamples);
   }
+
+  saveToFile(mixdown, "C:/Users/psusk/Downloads/mixdown.wav");
+
+  std::vector<std::pair<std::string, PluginData>> masterEffectPlugins;
+
+  PluginData masterEffect1PluginData;
+  masterEffect1PluginData.state = LimiterStateDir + "Limit-0dB.json";
+  masterEffectPlugins.push_back(std::make_pair(Limiter, masterEffect1PluginData));
+
+  RenderEngine engineMaster(SAMPLE_RATE, BLOCK_SIZE);
+  engineMaster.setBPM(BPM);
+  loadGraph(engineMaster, masterEffectPlugins, mixdown);
+
+  saveToFile(mixdown, "C:/Users/psusk/Downloads/master.wav");
 }
 
 void nonmultithread() {
@@ -354,13 +384,39 @@ void nonmultithread() {
   auto SFX = engineSFX.getAudioFrames();
   auto SFX2 = engineSFX2.getAudioFrames();
 
-  if (saveInt) {
-    saveToFile(drums, "C:/Users/psusk/Downloads/drums.wav");
-    saveToFile(bass, "C:/Users/psusk/Downloads/bass.wav");
-    saveToFile(melody, "C:/Users/psusk/Downloads/melody.wav");
-    saveToFile(SFX, "C:/Users/psusk/Downloads/SFX.wav");
-    saveToFile(SFX2, "C:/Users/psusk/Downloads/SFX2.wav");
+  saveToFile(drums, "C:/Users/psusk/Downloads/drums.wav");
+  saveToFile(bass, "C:/Users/psusk/Downloads/bass.wav");
+  saveToFile(melody, "C:/Users/psusk/Downloads/melody.wav");
+  saveToFile(SFX, "C:/Users/psusk/Downloads/SFX.wav");
+  saveToFile(SFX2, "C:/Users/psusk/Downloads/SFX2.wav");
+
+  int numChannels = drums.getNumChannels();
+  int numSamples = drums.getNumSamples();
+
+  juce::AudioSampleBuffer mixdown(numChannels, numSamples);
+  mixdown.clear();
+
+  for (int channel = 0; channel < numChannels; channel++) {
+    mixdown.addFrom(channel, 0, drums.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, bass.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, melody.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, SFX.getReadPointer(channel), numSamples);
+    mixdown.addFrom(channel, 0, SFX2.getReadPointer(channel), numSamples);
   }
+
+  saveToFile(mixdown, "C:/Users/psusk/Downloads/mixdown.wav");
+
+  std::vector<std::pair<std::string, PluginData>> masterEffectPlugins;
+
+  PluginData masterEffect1PluginData;
+  masterEffect1PluginData.state = LimiterStateDir + "Limit-0dB.json";
+  masterEffectPlugins.push_back(std::make_pair(Limiter, masterEffect1PluginData));
+
+  RenderEngine engineMaster(SAMPLE_RATE, BLOCK_SIZE);
+  engineMaster.setBPM(BPM);
+  loadGraph(engineMaster, masterEffectPlugins, mixdown);
+
+  saveToFile(mixdown, "C:/Users/psusk/Downloads/master.wav");
 }
 
 int main() {
@@ -368,7 +424,7 @@ int main() {
   //Py_Initialize();
 
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  nonmultithread();
+  //nonmultithread();
   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
   std::cout << std::endl << "Non-Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl << std::endl;
