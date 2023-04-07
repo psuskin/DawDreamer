@@ -2483,6 +2483,7 @@ copy "..\..\thirdparty\libfaust\win-x64\Release\bin\faust.dll" "$(pythonLocation
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_gui_extra.cpp" />
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_opengl.cpp" />
     <ClCompile Include="..\..\JuceLibraryCode\include_juce_video.cpp" />
+    <ClCompile Include="MultiThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\thirdparty\libsamplerate\include\samplerate.h" />
@@ -3535,6 +3536,7 @@ copy "..\..\thirdparty\libfaust\win-x64\Release\bin\faust.dll" "$(pythonLocation
     <ClInclude Include="..\..\JuceLibraryCode\AppConfig.h" />
     <ClInclude Include="..\..\JuceLibraryCode\BinaryData.h" />
     <ClInclude Include="..\..\JuceLibraryCode\JuceHeader.h" />
+    <ClInclude Include="MultiThread.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\thirdparty\rubberband\src\kissfft\COPYING" />
