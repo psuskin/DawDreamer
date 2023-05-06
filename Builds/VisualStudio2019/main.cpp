@@ -419,21 +419,43 @@ void nonmultithread() {
   saveToFile(mixdown, "C:/Users/psusk/Downloads/master.wav");
 }
 
+void exampleGeneration() {
+    //Py_SetPythonHome(L"C:/Users/psusk/AppData/Local/Programs/Python/Python39");
+    //Py_Initialize();
+
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    //nonmultithread();
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+    std::cout << std::endl << "Non-Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl << std::endl;
+
+    begin = std::chrono::steady_clock::now();
+    multithread();
+    end = std::chrono::steady_clock::now();
+
+    std::cout << std::endl << "Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;
+}
+
+void exampleSerum() {
+    Py_SetPythonHome(L"C:/Python/Python39");
+    Py_Initialize();
+
+    juce::MessageManager::getInstance(); // THIS IS DECISIVE
+
+    RenderEngine engine(SAMPLE_RATE, BLOCK_SIZE);
+
+    PluginProcessorWrapper* plugin = engine.makePluginProcessor("synth", "C:/Program Files/Common Files/VST2/Serum_x64.dll");
+
+    plugin->loadStateInformation("C:/Dropbox/BEATFUL - Resources/Serum Presets/All Presets/THH_Tonal808_Punchy_1_Long.fxp");
+
+    plugin->openEditor();
+
+    plugin->openEditor();
+}
+
 int main() {
-  //Py_SetPythonHome(L"C:/Users/psusk/AppData/Local/Programs/Python/Python39");
-  //Py_Initialize();
-
-  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  //nonmultithread();
-  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-
-  std::cout << std::endl << "Non-Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl << std::endl;
-
-  begin = std::chrono::steady_clock::now();
-  multithread();
-  end = std::chrono::steady_clock::now();
-
-  std::cout << std::endl << "Multithread elapsed time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000. << std::endl;
+  //exampleGeneration();
+  exampleSerum();
 
   return 0;
 }

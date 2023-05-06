@@ -202,7 +202,7 @@ void AudioPluginInstance::assertOnceOnDeprecatedMethodUse() const noexcept
         // removing these methods so you are strongly advised to look at the
         // implementation of the corresponding method in this class and use
         // that approach instead.
-        jassertfalse;
+        //jassertfalse;
     }
 
     deprecationAssertiontriggered = true;
