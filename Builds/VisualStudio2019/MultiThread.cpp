@@ -1,5 +1,9 @@
 #include "MultiThread.h"
 
+void MultiThread::init() {
+	juce::MessageManager::getInstance();
+}
+
 py::list MultiThread::render(float duration, py::list engineList) {
 	auto func = static_cast<bool (RenderEngine::*)(double, bool)>(&RenderEngine::render);
 

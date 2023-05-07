@@ -489,6 +489,7 @@ Unlike a VST, the parameters don't need to be between 0 and 1. For example, you 
       m, "MultiThread",
       "The multithread class manages multithreaded processes.")
       .def(py::init<>())
+      .def("init", &MultiThread::init)
       .def("render", &MultiThread::render, arg("duration"), arg("engines"), "Render for multiple engines synchronously.");
 
   py::class_<RenderEngine>(
