@@ -437,7 +437,7 @@ void exampleGeneration() {
 }
 
 void exampleSerum() {
-    Py_SetPythonHome(L"C:/Python/Python39");
+    Py_SetPythonHome(L"C:/Users/psusk/AppData/Local/Programs/Python/Python39");
     Py_Initialize();
 
     juce::MessageManager::getInstance(); // THIS IS DECISIVE
@@ -446,7 +446,7 @@ void exampleSerum() {
 
     PluginProcessorWrapper* plugin = engine.makePluginProcessor("synth", "C:/Program Files/Common Files/VST2/Serum_x64.dll");
 
-    plugin->loadStateInformation("C:/Dropbox/BEATFUL - Resources/Serum Presets/All Presets/THH_Tonal808_Punchy_1_Long.fxp");
+    plugin->loadStateInformation("C:/Users/psusk/source/repos/Python/vize/Serum Presets/Generic Presets/Sub Basses/THH_Tonal808_Punchy_1_Long.fxp");
 
     plugin->openEditor();
 
